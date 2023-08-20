@@ -4,10 +4,14 @@ import java.io.*;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.sql.SQLOutput;
+import java.util.Map;
 import java.util.StringTokenizer;
 
+import model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static util.HttpRequestUtils.parseQueryString;
 
 public class RequestHandler extends Thread {
     private static final Logger log = LoggerFactory.getLogger(RequestHandler.class);
@@ -34,15 +38,25 @@ public class RequestHandler extends Thread {
             }
 
 
-            StringTokenizer st = new StringTokenizer(line);
 
-            st.nextToken();
+            String[] tokens = line.split(" ");
 
+            String url = tokens[1];
+            String requestPath = url.split("\\?")[0];
+            if(url.startsWith("/user/create")) {
+
+
+                String params = url.split("\\?")[1];
+                Map<String,String> data = parseQueryString(params);
+                User user1= new User(data.get("userId"),data.get("password"),data.get("name"),data.get("email"));
+                log.debug("User : {}",user1);
+            }
 
             // TODO 사용자 요청에 대한 처리는 이 곳에 구현하면 된다.
             DataOutputStream dos = new DataOutputStream(out);
-            //byte[] body = "Hello World".getBytes();
-            byte[] body = Files.readAllBytes(new File("./webapp" + st.nextToken()).toPath());
+
+            byte[] body = Files.readAllBytes(new File("./webapp" + requestPath).toPath());
+
             response200Header(dos, body.length);
             responseBody(dos, body);
         } catch (IOException e) {
